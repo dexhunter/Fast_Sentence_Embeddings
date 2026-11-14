@@ -1,0 +1,62 @@
+[
+  {
+    "upstream_repo": "oborchers/Fast_Sentence_Embeddings",
+    "head_sha": "060e2eded160b05a5598f68aa625f660310a9a98",
+    "file": "src/fse/_reference_bits.py",
+    "function": "hamming",
+    "native_test_cmd": "uv run pytest tests/test_reference_bits.py::test_hamming_counts_the_differing_bits tests/test_reference_bits.py::test_hamming_checks_its_input -q -p no:cacheprovider",
+    "bench_cmd": "uv run python osspr-intake/harness/bench.py hamming",
+    "baseline_median_ms": 376.343,
+    "baseline_noise_pct": 1.787,
+    "tests_pass_on_baseline": true,
+    "idea": "Replace the int32 gather from the 256-entry popcount table with np.bitwise_count when NumPy has it, otherwise a four-step SWAR popcount, still summed in int32 inside the existing blocks: each byte's popcount is the same integer, so the distance matrix is identical."
+  },
+  {
+    "upstream_repo": "oborchers/Fast_Sentence_Embeddings",
+    "head_sha": "060e2eded160b05a5598f68aa625f660310a9a98",
+    "file": "src/fse/_codes.py",
+    "function": "quantize_into",
+    "native_test_cmd": "uv run pytest tests/test_codes.py::test_quantize_matches_the_reference tests/test_codes.py::test_quantize_into_blocks_and_errors -q -p no:cacheprovider",
+    "bench_cmd": "uv run python osspr-intake/harness/bench.py quantize",
+    "baseline_median_ms": 227.439,
+    "baseline_noise_pct": 10.424,
+    "tests_pass_on_baseline": true,
+    "idea": "Quantize independent rows in blocks of a few hundred instead of 16384 so the abs and rint temporaries stay in cache; each row's scale and round-half-to-even codes do not depend on the block size, so the int8 codes and scales stay identical."
+  },
+  {
+    "upstream_repo": "oborchers/Fast_Sentence_Embeddings",
+    "head_sha": "060e2eded160b05a5598f68aa625f660310a9a98",
+    "file": "src/fse/_text/_strings.py",
+    "function": "StringSource.__init__",
+    "native_test_cmd": "uv run pytest tests/test_text_strings.py::test_strings_are_joined_natively tests/test_text_strings.py::test_strings_the_native_pass_leaves_take_the_python_path -q -p no:cacheprovider",
+    "bench_cmd": "uv run python osspr-intake/harness/bench.py strings",
+    "baseline_median_ms": 105.312,
+    "baseline_noise_pct": 12.257,
+    "tests_pass_on_baseline": true,
+    "idea": "Turn a 1-d numpy array of exact str into a list and pass it to the existing native joiner, leaving subclasses and bad rows on the Python path; the native joiner writes the same UTF-8 bytes and offsets."
+  },
+  {
+    "upstream_repo": "oborchers/Fast_Sentence_Embeddings",
+    "head_sha": "060e2eded160b05a5598f68aa625f660310a9a98",
+    "file": "src/fse/_text/_strings.py",
+    "function": "TokenListSource.__init__",
+    "native_test_cmd": "uv run pytest tests/test_text_strings.py::test_token_list_source tests/test_text_strings.py::test_token_lists_are_joined_natively -q -p no:cacheprovider",
+    "bench_cmd": "uv run python osspr-intake/harness/bench.py tokens",
+    "baseline_median_ms": 247.054,
+    "baseline_noise_pct": 3.139,
+    "tests_pass_on_baseline": true,
+    "idea": "Hand a 1-d object array of token lists to the existing native joiner via tolist, and keep the Python checker for anything it rejects; the joiner applies the same token rules and writes the same UTF-8 buffer and offsets."
+  },
+  {
+    "upstream_repo": "oborchers/Fast_Sentence_Embeddings",
+    "head_sha": "060e2eded160b05a5598f68aa625f660310a9a98",
+    "file": "src/fse/_wordvectors_format.py",
+    "function": "_check_scale_values",
+    "native_test_cmd": "uv run pytest tests/test_wordvectors_format.py::test_verify_checks_values tests/test_wordvectors.py::test_int8_scales_that_overflow_are_rejected -q -p no:cacheprovider",
+    "bench_cmd": "uv run python osspr-intake/harness/bench.py scales",
+    "baseline_median_ms": 141.400,
+    "baseline_noise_pct": 4.245,
+    "tests_pass_on_baseline": true,
+    "idea": "Cast int8 codes to float32 a few hundred rows at a time instead of 16384 so the cast stays in cache; the per-row maximum and its product with the scale are unchanged, so the same rows pass or fail."
+  }
+]
